@@ -24,9 +24,9 @@ export default function Home() {
 
   const signIn = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: "http://localhost:3000" },
-    });
+  provider: "google",
+  options: { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
+	});
   };
 
   const signOut = async () => {
