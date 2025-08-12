@@ -24,13 +24,40 @@ export default function Home() {
 
   const signIn = async () => {
     await supabase.auth.signInWithOAuth({
-  provider: "google",
-  options: { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
-	});
+      provider: "google",
+      options: { redirectTo: typeof window !== "undefined" ? window.location.origin : undefined },
+    });
   };
 
   const signOut = async () => {
     await supabase.auth.signOut();
+  };
+
+  const callSecureApi = async () => {
+    const { data, error } = await supabase.auth.getSession();
+    console.log("Supabase getSession() →", { data, error });
+    const token = data?.session?.access_token;
+    console.log("Access token being sent:", token?.slice(0, 20) + "...");
+
+    if (!token) {
+      alert("No session token. Please sign in first.");
+      return;
+    }
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/secure`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+      },
+    });
+
+    const text = await res.text();
+    console.log("API raw response:", text);
+    try {
+      alert(JSON.stringify(JSON.parse(text), null, 2));
+    } catch {
+      alert(text);
+    }
   };
 
   return (
@@ -41,7 +68,10 @@ export default function Home() {
       ) : email ? (
         <>
           <p>Signed in as: {email}</p>
-          <button onClick={signOut}>Sign out</button>
+          <div style={{ display: "flex", gap: 12 }}>
+            <button onClick={signOut}>Sign out</button>
+            <button onClick={callSecureApi}>Call Secure API (local)</button>
+          </div>
         </>
       ) : (
         <button onClick={signIn}>Sign in with Google</button>
